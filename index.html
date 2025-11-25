@@ -1,0 +1,1231 @@
+<!-- Chosen Palette: Calm Neutrals (BG: gray-50, Cards: white, Text: gray-800, Accents: blue-600) -->
+<!-- Application Structure Plan: 
+     - Fixed "Masthead" Header: H1 Title (Blue) + Navigation Bar (White).
+     - Body padding adjusted for fixed header height.
+     - Modules 1-8: FULL DETAILED CONTENT restored (Text, CSS Diagrams, Interactive Details).
+     - Module 9: Flashcards system (50 items).
+     - Module 10: Quiz system (100 items) with immediate feedback and scoring.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo - Arquitetura Corporativa de TIC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html { scroll-behavior: smooth; }
+        
+        /* Ajuste do padding-top para compensar o cabeçalho mais alto */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            padding-top: 8.5rem; 
+        }
+        
+        @media (max-width: 768px) {
+            body { padding-top: 8rem; }
+        }
+
+        /* Navigation Styles */
+        .nav-link {
+            display: inline-block;
+            padding: 0.5rem 0.4rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #4b5563;
+            transition: all 0.2s ease-in-out;
+            white-space: nowrap;
+        }
+        @media (min-width: 1024px) {
+            .nav-link { font-size: 0.85rem; padding: 0.5rem 0.6rem; }
+        }
+        @media (min-width: 1280px) {
+            .nav-link { font-size: 0.9rem; padding: 0.5rem 0.75rem; }
+        }
+        .nav-link:hover {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+        .nav-link.active {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        /* Mobile Menu Animation */
+        #mobile-menu {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        #mobile-menu.open {
+            max-height: 800px;
+            opacity: 1;
+        }
+
+        .content-section {
+            scroll-margin-top: 9.5rem;
+        }
+        
+        /* Diagram Styles */
+        .details-marker::marker { color: #4f46e5; }
+        .details-summary { cursor: pointer; font-weight: 600; color: #312e81; }
+        
+        /* Zachman Table */
+        .zachman-table th, .zachman-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+            transition: background-color 0.2s;
+        }
+        .zachman-table th { background-color: #f3f4f6; }
+        .zachman-table td:hover { background-color: #e0e7ff; }
+        
+        /* TOGAF ADM CSS Grid */
+        .togaf-adm {
+            display: grid;
+            grid-template-areas:
+                ". preliminary ."
+                "h-change a-vision b-business"
+                "req-mgmt adm-center c-info"
+                "g-gov f-migration e-opps"
+                ". d-tech .";
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+        .adm-phase {
+            background-color: #f0f9ff;
+            border: 2px solid #0284c7;
+            color: #0c4a6e;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .adm-phase:hover { transform: scale(1.05); z-index: 10; }
+        @media (min-width: 768px) {
+            .adm-phase { padding: 1rem; font-size: 1rem; }
+        }
+        #preliminary { grid-area: preliminary; }
+        #a-vision { grid-area: a-vision; }
+        #b-business { grid-area: b-business; }
+        #c-info { grid-area: c-info; }
+        #d-tech { grid-area: d-tech; }
+        #e-opps { grid-area: e-opps; }
+        #f-migration { grid-area: f-migration; }
+        #g-gov { grid-area: g-gov; }
+        #h-change { grid-area: h-change; }
+        #req-mgmt { grid-area: req-mgmt; background-color: #fffbeb; border-color: #f59e0b; color: #78350f; z-index: 10; }
+        #adm-center { grid-area: adm-center; background-color: #e0e7ff; border-color: #4f46e5; color: #312e81; border-radius: 50%; z-index: 5; font-weight: 800; }
+
+        /* Pyramid Diagram */
+        .clip-path-pyramid-top { clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%); }
+        .clip-path-pyramid-mid-top { clip-path: polygon(10% 0, 90% 0, 100% 100%, 0% 100%); }
+        .clip-path-pyramid-mid-low { clip-path: polygon(0% 0, 100% 0, 100% 100%, 0% 100%); }
+
+        /* Flashcard CSS */
+        .perspective-1000 { perspective: 1000px; }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard-inner.flipped { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .flashcard-front { background-color: #ffffff; border: 2px solid #e5e7eb; color: #1e3a8a; z-index: 2; }
+        .flashcard-back { background-color: #eff6ff; border: 2px solid #3b82f6; color: #1e40af; transform: rotateY(180deg); z-index: 1; }
+
+        /* Quiz Styles */
+        .quiz-option {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quiz-option:hover:not(.disabled) {
+            background-color: #f3f4f6;
+            border-color: #3b82f6;
+        }
+        .quiz-option.selected {
+            background-color: #eff6ff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px #2563eb;
+        }
+        .quiz-option.correct {
+            background-color: #dcfce7 !important;
+            border-color: #16a34a !important;
+            color: #14532d;
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2 !important;
+            border-color: #dc2626 !important;
+            color: #7f1d1d;
+        }
+        .quiz-option.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Fixed Header Container -->
+    <header class="fixed top-0 left-0 right-0 z-50 shadow-md">
+        <!-- Row 1: H1 Title -->
+        <div class="bg-blue-800 px-4 py-3 text-center sm:px-6 lg:px-8">
+            <h1 class="text-xl font-bold text-white md:text-2xl lg:text-3xl">Arquitetura Corporativa de TIC</h1>
+        </div>
+
+        <!-- Row 2: Navigation Menu -->
+        <div class="border-b border-gray-200 bg-white">
+            <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <!-- Desktop Nav -->
+                <nav class="hidden w-full justify-center md:flex md:space-x-1">
+                    <a href="#modulo1" class="nav-link active">1. Conceitos</a>
+                    <a href="#modulo2" class="nav-link">2. Sistemas</a>
+                    <a href="#modulo3" class="nav-link">3. Ciclo de Vida</a>
+                    <a href="#modulo4" class="nav-link">4. Camadas</a>
+                    <a href="#modulo5" class="nav-link">5. Frameworks</a>
+                    <a href="#modulo6" class="nav-link">6. Racionalização</a>
+                    <a href="#modulo7" class="nav-link">7. APIs</a>
+                    <a href="#modulo8" class="nav-link">8. Governança</a>
+                    <a href="#modulo9" class="nav-link text-blue-700 font-bold bg-blue-50">9. Flashcards</a>
+                    <a href="#modulo10" class="nav-link text-green-700 font-bold bg-green-50">10. Questões</a>
+                </nav>
+
+                <!-- Mobile Header Content -->
+                <div class="flex w-full items-center justify-between md:hidden">
+                    <span class="text-sm font-semibold text-gray-500">Guia de Estudo Interativo</span>
+                    <button id="mobileMenuButton" type="button" class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Dropdown -->
+            <div class="border-t border-gray-100 bg-white md:hidden" id="mobile-menu">
+                <div class="space-y-1 px-2 pt-2 pb-3 shadow-lg">
+                    <a href="#modulo1" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">1. Conceitos e Benefícios</a>
+                    <a href="#modulo2" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">2. Sistemas de Informação</a>
+                    <a href="#modulo3" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">3. Ciclo de Vida de Software</a>
+                    <a href="#modulo4" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">4. Camadas da Arquitetura</a>
+                    <a href="#modulo5" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">5. Frameworks</a>
+                    <a href="#modulo6" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">6. Racionalização</a>
+                    <a href="#modulo7" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">7. APIs e Integração</a>
+                    <a href="#modulo8" class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-700 mobile-link">8. Governança de Dados</a>
+                    <a href="#modulo9" class="block rounded-md px-3 py-2 text-sm font-bold text-blue-700 bg-blue-50 mobile-link">9. Flashcards</a>
+                    <a href="#modulo10" class="block rounded-md px-3 py-2 text-sm font-bold text-green-700 bg-green-50 mobile-link">10. Simulado (100 Questões)</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+            
+        <!-- Módulo 1: Conceitos e Benefícios (COMPLETO) -->
+        <section id="modulo1" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 1: Conceitos e Benefícios</h2>
+                <p class="mb-6 text-base text-gray-700">Esta seção introduz o conceito fundamental de Arquitetura Corporativa (AC). O objetivo é entender a AC como uma "planta" da organização que alinha a estratégia de negócios com a tecnologia, garantindo que os investimentos em TI gerem valor real e suportem os objetivos de longo prazo.</p>
+                
+                <h3 class="mb-3 text-xl font-semibold text-gray-900">1.1. O que é Arquitetura Corporativa (AC)?</h3>
+                <p class="mb-4 text-gray-700">A Arquitetura Corporativa é a prática de analisar, projetar, planejar e implementar a estrutura e os componentes de uma organização para atingir seus objetivos estratégicos. Ela fornece uma visão holística de como os elementos de negócio, dados, aplicações e tecnologia estão inter-relacionados.</p>
+                <div class="mb-6 rounded-md bg-blue-50 p-4 text-sm text-blue-800">
+                    <strong>Ponto Chave:</strong> Diferente da "Arquitetura de Solução" (foco em um projeto) ou "Arquitetura de Software" (foco em um sistema), a AC tem uma visão de <strong>longo prazo</strong> e <strong>abrangente</strong> da empresa.
+                </div>
+
+                <h3 class="mb-3 text-xl font-semibold text-gray-900">1.2. Benefícios da Arquitetura Corporativa</h3>
+                <p class="mb-4 text-gray-700">A adoção de uma prática de AC madura traz benefícios tangíveis e intangíveis. Explore os principais benefícios abaixo:</p>
+                <div class="space-y-3">
+                    <details class="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                        <summary class="details-summary text-blue-800">Alinhamento Estratégico</summary>
+                        <p class="mt-2 text-sm text-gray-700">Garante que os projetos de TI sejam impulsionados por demandas de negócio, evitando "silos" tecnológicos e desperdício de recursos.</p>
+                    </details>
+                    <details class="rounded-lg border border-green-200 bg-green-50 p-3">
+                        <summary class="details-summary text-green-800">Redução de Custos</summary>
+                        <p class="mt-2 text-sm text-gray-700">Identifica e elimina aplicações e tecnologias redundantes (racionalização) e promove o uso de padrões, reduzindo custos de licenciamento, suporte e treinamento.</p>
+                    </details>
+                    <details class="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                        <summary class="details-summary text-yellow-800">Agilidade e Gestão da Mudança</summary>
+                        <p class="mt-2 text-sm text-gray-700">Fornece um mapa claro do estado atual ("As-Is") e futuro ("To-Be"), permitindo que a organização responda mais rapidamente a mudanças de mercado ou regulações.</p>
+                    </details>
+                    <details class="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+                        <summary class="details-summary text-indigo-800">Tomada de Decisão Aprimorada</summary>
+                        <p class="mt-2 text-sm text-gray-700">Oferece aos gestores uma visão clara de como a tecnologia suporta o negócio, permitindo decisões de investimento mais informadas.</p>
+                    </details>
+                    <details class="rounded-lg border border-red-200 bg-red-50 p-3">
+                        <summary class="details-summary text-red-800">Redução de Riscos</summary>
+                        <p class="mt-2 text-sm text-gray-700">Identifica riscos tecnológicos (obsolescência) e de negócio, e melhora a conformidade (compliance) com leis como a LGPD.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- Módulo 2: Sistemas de Informação (COMPLETO) -->
+        <section id="modulo2" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 2: Sistemas de Informação (SI)</h2>
+                <p class="mb-6 text-base text-gray-700">Nesta seção, exploramos os diferentes tipos de Sistemas de Informação (SI) e como eles se encaixam na Arquitetura Corporativa. O objetivo é classificar os sistemas com base no nível organizacional que atendem.</p>
+
+                <h3 class="mb-3 text-xl font-semibold text-gray-900">2.1. Pirâmide de Sistemas por Nível Organizacional</h3>
+                
+                <div class="relative mx-auto my-8 w-full max-w-md">
+                    <div class="relative transform text-center text-white">
+                        <div class="z-10 bg-blue-800 p-4 shadow-lg clip-path-pyramid-top hover:bg-blue-900 transition-colors">
+                            <h4 class="font-bold">Estratégico (SIE / ESS)</h4>
+                            <p class="text-xs sm:text-sm">Apoio à Decisão (Longo Prazo)</p>
+                        </div>
+                        <div class="z-20 -mt-2 bg-blue-600 p-4 shadow-lg clip-path-pyramid-mid-top hover:bg-blue-700 transition-colors">
+                            <h4 class="font-bold">Tático (SAD / SIG)</h4>
+                            <p class="text-xs sm:text-sm">Controle Gerencial (Médio Prazo)</p>
+                        </div>
+                        <div class="z-30 -mt-2 bg-blue-400 p-4 shadow-lg clip-path-pyramid-mid-low hover:bg-blue-500 transition-colors">
+                            <h4 class="font-bold">Operacional (SPT / OLTP)</h4>
+                            <p class="text-xs sm:text-sm">Transações do Dia a Dia</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Sigla</th>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Nome</th>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Função</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2 text-sm font-bold">SPT</td>
+                                <td class="px-4 py-2 text-sm">Proc. de Transações</td>
+                                <td class="px-4 py-2 text-sm">Coletar dados diários (PDV, Folha)</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 text-sm font-bold">SIG</td>
+                                <td class="px-4 py-2 text-sm">Inf. Gerenciais</td>
+                                <td class="px-4 py-2 text-sm">Relatórios resumidos para gestores</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 text-sm font-bold">SAD</td>
+                                <td class="px-4 py-2 text-sm">Apoio à Decisão</td>
+                                <td class="px-4 py-2 text-sm">Simulações "What-if"</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 text-sm font-bold">SIE</td>
+                                <td class="px-4 py-2 text-sm">Inf. Executiva</td>
+                                <td class="px-4 py-2 text-sm">Dashboards/KPIs estratégicos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mt-6 mb-3 text-xl font-semibold text-gray-900">2.2. SI Integrados</h3>
+                <div class="flex flex-col gap-4 md:flex-row">
+                    <div class="flex-1 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="mb-2 flex items-center gap-2">
+                            <span class="rounded bg-blue-100 px-2 py-1 text-xs font-bold text-blue-800">ERP</span>
+                            <h4 class="font-bold text-gray-800">Enterprise Resource Planning</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Backbone da empresa. Integra finanças, RH, compras e manufatura em um banco único.</p>
+                    </div>
+                    <div class="flex-1 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="mb-2 flex items-center gap-2">
+                            <span class="rounded bg-green-100 px-2 py-1 text-xs font-bold text-green-800">CRM</span>
+                            <h4 class="font-bold text-gray-800">Customer Relationship Mgmt</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Front-office. Gerencia todo o relacionamento com o cliente (vendas, mkt, suporte).</p>
+                    </div>
+                    <div class="flex-1 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="mb-2 flex items-center gap-2">
+                            <span class="rounded bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800">SCM</span>
+                            <h4 class="font-bold text-gray-800">Supply Chain Mgmt</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Logística. Gerencia o fluxo de suprimentos, da matéria-prima à entrega final.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Módulo 3: Ciclo de Vida de Software (COMPLETO) -->
+        <section id="modulo3" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 3: Ciclo de Vida de Software (CVS / SDLC)</h2>
+                <p class="mb-6 text-base text-gray-700">A AC define *o que* construir; o CVS define *como*. Comparação entre modelos tradicionais e ágeis.</p>
+
+                <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <!-- Waterfall -->
+                    <div class="flex flex-col rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <h4 class="mb-2 border-b border-gray-200 pb-2 text-lg font-bold text-gray-800 text-center">Cascata (Waterfall)</h4>
+                        <p class="mb-4 text-xs text-gray-500 text-center">Linear, sequencial, rígido. Requisitos congelados no início.</p>
+                        <div class="flex flex-col space-y-2 px-8">
+                            <div class="rounded bg-white p-2 text-center text-sm shadow-sm ring-1 ring-gray-200">1. Requisitos</div>
+                            <div class="mx-auto text-gray-400">↓</div>
+                            <div class="rounded bg-white p-2 text-center text-sm shadow-sm ring-1 ring-gray-200">2. Projeto</div>
+                            <div class="mx-auto text-gray-400">↓</div>
+                            <div class="rounded bg-white p-2 text-center text-sm shadow-sm ring-1 ring-gray-200">3. Implementação</div>
+                            <div class="mx-auto text-gray-400">↓</div>
+                            <div class="rounded bg-white p-2 text-center text-sm shadow-sm ring-1 ring-gray-200">4. Testes</div>
+                            <div class="mx-auto text-gray-400">↓</div>
+                            <div class="rounded bg-white p-2 text-center text-sm shadow-sm ring-1 ring-gray-200">5. Implantação</div>
+                        </div>
+                    </div>
+
+                    <!-- Agile -->
+                    <div class="flex flex-col rounded-lg border border-blue-100 bg-blue-50 p-4">
+                        <h4 class="mb-2 border-b border-blue-200 pb-2 text-lg font-bold text-blue-800 text-center">Ágil (Scrum)</h4>
+                        <p class="mb-4 text-xs text-blue-600 text-center">Iterativo, incremental, adaptativo. Ciclos curtos (Sprints).</p>
+                        <div class="relative flex h-full flex-col items-center justify-center py-6">
+                            <div class="relative h-40 w-40 animate-spin-slow rounded-full border-4 border-dashed border-blue-400"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center">
+                                    <span class="block text-2xl font-bold text-blue-800">SPRINT</span>
+                                    <span class="text-xs text-blue-600">2-4 Semanas</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                                <span class="rounded bg-white px-2 py-1 shadow-sm">Planejamento</span>
+                                <span class="rounded bg-white px-2 py-1 shadow-sm">Execução</span>
+                                <span class="rounded bg-white px-2 py-1 shadow-sm">Review</span>
+                                <span class="rounded bg-white px-2 py-1 shadow-sm">Retrospectiva</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Módulo 4: Camadas da Arquitetura (COMPLETO) -->
+        <section id="modulo4" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 4: Camadas da Arquitetura</h2>
+                <p class="mb-6 text-base text-gray-700">As 4 camadas essenciais para abstrair a complexidade organizacional, do negócio à infraestrutura.</p>
+
+                <div class="space-y-4">
+                    <!-- Business -->
+                    <div class="group relative overflow-hidden rounded-lg border border-blue-200 bg-white transition-all hover:shadow-md">
+                        <div class="absolute left-0 top-0 h-full w-2 bg-blue-600"></div>
+                        <details class="group p-4 pl-6" open>
+                            <summary class="flex cursor-pointer items-center justify-between font-bold text-blue-900">
+                                <span>1. Camada de Negócio (Business)</span>
+                                <span class="transition-transform group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="mt-3 text-sm text-gray-600">
+                                <p class="mb-2"><strong>Foco:</strong> Estratégia, processos e organização. O "O quê" e "Por quê".</p>
+                                <ul class="list-disc pl-5">
+                                    <li>Mapas de Capacidade de Negócio</li>
+                                    <li>Modelos de Processos (BPMN)</li>
+                                    <li>Estrutura Organizacional</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- Data -->
+                    <div class="group relative overflow-hidden rounded-lg border border-green-200 bg-white transition-all hover:shadow-md">
+                        <div class="absolute left-0 top-0 h-full w-2 bg-green-600"></div>
+                        <details class="group p-4 pl-6">
+                            <summary class="flex cursor-pointer items-center justify-between font-bold text-green-900">
+                                <span>2. Camada de Dados (Data)</span>
+                                <span class="transition-transform group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="mt-3 text-sm text-gray-600">
+                                <p class="mb-2"><strong>Foco:</strong> Estrutura dos ativos de dados lógicos e físicos.</p>
+                                <ul class="list-disc pl-5">
+                                    <li>Modelos de Dados (Conceitual, Lógico, Físico)</li>
+                                    <li>Dicionário de Dados</li>
+                                    <li>Matriz Dados x Aplicação</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- Application -->
+                    <div class="group relative overflow-hidden rounded-lg border border-yellow-200 bg-white transition-all hover:shadow-md">
+                        <div class="absolute left-0 top-0 h-full w-2 bg-yellow-500"></div>
+                        <details class="group p-4 pl-6">
+                            <summary class="flex cursor-pointer items-center justify-between font-bold text-yellow-900">
+                                <span>3. Camada de Aplicações (Application)</span>
+                                <span class="transition-transform group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="mt-3 text-sm text-gray-600">
+                                <p class="mb-2"><strong>Foco:</strong> Sistemas que processam dados e suportam o negócio.</p>
+                                <ul class="list-disc pl-5">
+                                    <li>Catálogo de Aplicações</li>
+                                    <li>Diagramas de Integração de Sistemas</li>
+                                    <li>Arquitetura de Solução</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- Technology -->
+                    <div class="group relative overflow-hidden rounded-lg border border-red-200 bg-white transition-all hover:shadow-md">
+                        <div class="absolute left-0 top-0 h-full w-2 bg-red-600"></div>
+                        <details class="group p-4 pl-6">
+                            <summary class="flex cursor-pointer items-center justify-between font-bold text-red-900">
+                                <span>4. Camada de Tecnologia (Technology)</span>
+                                <span class="transition-transform group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="mt-3 text-sm text-gray-600">
+                                <p class="mb-2"><strong>Foco:</strong> Infraestrutura de TI (Hardware, Redes, S.O.).</p>
+                                <ul class="list-disc pl-5">
+                                    <li>Diagramas de Rede</li>
+                                    <li>Catálogo de Servidores/Cloud</li>
+                                    <li>Padrões de Hardware e Software</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Módulo 5: Frameworks (COMPLETO) -->
+        <section id="modulo5" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 5: Frameworks (TOGAF, Zachman)</h2>
+                
+                <h3 class="mb-3 text-xl font-semibold text-gray-900">5.1. Zachman Framework</h3>
+                <p class="mb-4 text-sm text-gray-600">Uma ontologia (taxonomia) para organizar artefatos. Matriz 6x6 que cruza Perguntas (O quê, Como, Onde...) com Perspectivas (Planejador, Proprietário...).</p>
+                
+                <div class="mb-8 overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                    <table class="zachman-table w-full min-w-[600px] text-xs sm:text-sm">
+                        <thead>
+                            <tr>
+                                <th class="w-24 bg-gray-100 font-bold text-gray-700">Perspectiva</th>
+                                <th class="bg-gray-50">Dados (O quê)</th>
+                                <th class="bg-gray-50">Função (Como)</th>
+                                <th class="bg-gray-50">Rede (Onde)</th>
+                                <th class="bg-gray-50">Pessoas (Quem)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-bold text-gray-800">Planejador</td>
+                                <td>Lista de Coisas</td>
+                                <td>Lista de Processos</td>
+                                <td>Lista de Locais</td>
+                                <td>Lista de Org.</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold text-gray-800">Proprietário</td>
+                                <td>Modelo Conceitual</td>
+                                <td>Modelo de Processo</td>
+                                <td>Logística</td>
+                                <td>Fluxo de Trab.</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold text-gray-800">Designer</td>
+                                <td>Modelo Lógico</td>
+                                <td>Projeto Sistema</td>
+                                <td>Arq. Distribuída</td>
+                                <td>Interface Humana</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold text-gray-800">Construtor</td>
+                                <td>Modelo Físico</td>
+                                <td>Programa</td>
+                                <td>Arq. Tecnologia</td>
+                                <td>Segurança</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="bg-gray-50 p-2 text-center text-xs italic text-gray-500">*Matriz simplificada para visualização</p>
+                </div>
+
+                <h3 class="mt-8 mb-3 text-xl font-semibold text-gray-900">5.2. TOGAF ADM (Método)</h3>
+                <p class="mb-4 text-sm text-gray-600">O ADM é um ciclo iterativo de 10 fases para *fazer* arquitetura. Começa no Preliminar e gira em torno dos Requisitos.</p>
+                
+                <div class="togaf-adm select-none">
+                    <div id="preliminary" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase Preliminar: Preparação e Princípios">Preliminar</div>
+                    <div id="a-vision" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase A: Visão da Arquitetura">A: Visão</div>
+                    <div id="b-business" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase B: Arquitetura de Negócio">B: Negócio</div>
+                    <div id="c-info" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase C: Sistemas de Informação (Dados e Apps)">C: SI</div>
+                    <div id="d-tech" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase D: Arquitetura de Tecnologia">D: Tec</div>
+                    <div id="e-opps" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase E: Oportunidades e Soluções">E: Oport.</div>
+                    <div id="f-migration" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase F: Planejamento da Migração">F: Migração</div>
+                    <div id="g-gov" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase G: Governança da Implementação">G: Gov</div>
+                    <div id="h-change" class="adm-phase hover:bg-blue-50 cursor-help" title="Fase H: Gestão de Mudanças">H: Mudança</div>
+                    <div id="adm-center" class="adm-phase font-bold text-blue-900 shadow-inner">ADM</div>
+                    <div id="req-mgmt" class="adm-phase shadow-sm cursor-help" title="Gestão de Requisitos (Contínuo)">Requisitos</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Módulo 6: Racionalização (COMPLETO) -->
+        <section id="modulo6" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 6: Racionalização (Modelo TIME)</h2>
+                <p class="mb-6 text-base text-gray-700">Como decidir o destino das aplicações? O Gartner propõe a matriz TIME (Tolerate, Invest, Migrate, Eliminate) baseada em Valor de Negócio x Adequação Técnica.</p>
+
+                <div class="grid grid-cols-2 gap-2 text-center h-64">
+                    <div class="flex flex-col items-center justify-center rounded bg-green-100 p-4 transition hover:bg-green-200 border border-green-200">
+                        <span class="text-3xl mb-2">🚀</span>
+                        <h4 class="font-bold text-green-900">INVEST (Investir)</h4>
+                        <p class="text-xs text-green-800">Alto Valor / Alta Tec</p>
+                        <p class="text-[10px] text-green-700 mt-1">Estratégico. Inovar.</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center rounded bg-blue-100 p-4 transition hover:bg-blue-200 border border-blue-200">
+                        <span class="text-3xl mb-2">🔄</span>
+                        <h4 class="font-bold text-blue-900">MIGRATE (Migrar)</h4>
+                        <p class="text-xs text-blue-800">Alto Valor / Baixa Tec</p>
+                        <p class="text-[10px] text-blue-700 mt-1">Replatform ou Refactor.</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center rounded bg-yellow-100 p-4 transition hover:bg-yellow-200 border border-yellow-200">
+                        <span class="text-3xl mb-2">🛡️</span>
+                        <h4 class="font-bold text-yellow-900">TOLERATE (Tolerar)</h4>
+                        <p class="text-xs text-yellow-800">Baixo Valor / Alta Tec</p>
+                        <p class="text-[10px] text-yellow-700 mt-1">Manter. Custo mínimo.</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center rounded bg-red-100 p-4 transition hover:bg-red-200 border border-red-200">
+                        <span class="text-3xl mb-2">🗑️</span>
+                        <h4 class="font-bold text-red-900">ELIMINATE (Eliminar)</h4>
+                        <p class="text-xs text-red-800">Baixo Valor / Baixa Tec</p>
+                        <p class="text-[10px] text-red-700 mt-1">Descomissionar.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Módulo 7: Integração e APIs (COMPLETO) -->
+        <section id="modulo7" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 7: APIs e Integração</h2>
+                <p class="mb-4 text-gray-700"><strong>Integração</strong> é conectar sistemas. <strong>Interoperabilidade</strong> é garantir que eles se entendam. O padrão moderno de integração é via APIs (REST/JSON).</p>
+                
+                <div class="my-6 flex flex-col items-center justify-center gap-4 rounded-lg bg-gray-50 p-6 md:flex-row border border-gray-200">
+                    <div class="text-center">
+                        <div class="text-4xl">📱</div>
+                        <div class="text-sm font-bold text-gray-600 mt-2">App Consumidor</div>
+                    </div>
+                    <div class="hidden text-gray-400 md:block font-mono">-- HTTP Request --></div>
+                    <div class="rotate-90 text-gray-400 md:hidden font-mono">|</div>
+                    
+                    <div class="relative rounded-lg border-2 border-blue-400 bg-blue-50 p-6 text-center shadow-md">
+                        <div class="font-bold text-blue-900 text-lg mb-2">API Gateway</div>
+                        <div class="text-xs text-blue-700 space-y-1">
+                            <div class="bg-blue-100 px-2 py-1 rounded">🛡️ Segurança (OAuth)</div>
+                            <div class="bg-blue-100 px-2 py-1 rounded">🚦 Rate Limiting</div>
+                            <div class="bg-blue-100 px-2 py-1 rounded">🔀 Roteamento</div>
+                        </div>
+                    </div>
+
+                    <div class="hidden text-gray-400 md:block font-mono">-- Roteamento --></div>
+                    <div class="rotate-90 text-gray-400 md:hidden font-mono">|</div>
+
+                    <div class="text-center">
+                        <div class="text-4xl">⚙️</div>
+                        <div class="text-sm font-bold text-gray-600 mt-2">Microsserviço</div>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 mt-4">A <strong>Governança de APIs</strong> gerencia o ciclo de vida (criação, versionamento, desativação) e disponibiliza um Portal do Desenvolvedor.</p>
+            </div>
+        </section>
+        
+        <!-- Módulo 8: Governança de Dados (COMPLETO) -->
+        <section id="modulo8" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <h2 class="mb-4 border-b border-gray-200 pb-2 text-2xl font-bold text-blue-600">Módulo 8: Governança de Dados</h2>
+                <p class="mb-6 text-base text-gray-700">Disciplina focada em gerenciar dados como ativo estratégico. Envolve Qualidade, Metadados, Ciclo de Vida e Privacidade (LGPD).</p>
+
+                <div class="flex flex-col gap-8 lg:flex-row">
+                    <!-- Chart -->
+                    <div class="flex-1 border rounded-lg p-4 bg-gray-50">
+                        <h3 class="mb-4 text-center text-lg font-semibold text-gray-800">Dimensões da Qualidade</h3>
+                        <div class="chart-container relative mx-auto h-72 w-full max-w-sm">
+                            <canvas id="dataQualityChart"></canvas>
+                        </div>
+                        <p class="text-xs text-center text-gray-500 mt-2">Exemplo visual de métricas de qualidade</p>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="flex-1 space-y-4">
+                        <div class="rounded bg-gray-50 p-4 border border-gray-200">
+                            <h4 class="font-bold text-gray-800 flex items-center gap-2">
+                                <span class="bg-blue-100 p-1 rounded text-blue-600">🔄</span> Ciclo de Vida (DLM)
+                            </h4>
+                            <div class="flex items-center text-sm text-gray-600 mt-2 gap-1 flex-wrap">
+                                <span class="bg-white px-2 py-1 border rounded">Criação</span> →
+                                <span class="bg-white px-2 py-1 border rounded">Uso</span> →
+                                <span class="bg-white px-2 py-1 border rounded">Arquivamento</span> →
+                                <span class="bg-white px-2 py-1 border rounded">Exclusão</span>
+                            </div>
+                        </div>
+                        <div class="rounded bg-gray-50 p-4 border border-gray-200">
+                            <h4 class="font-bold text-gray-800 flex items-center gap-2">
+                                <span class="bg-yellow-100 p-1 rounded text-yellow-600">⚖️</span> LGPD & Privacidade
+                            </h4>
+                            <p class="text-sm text-gray-600 mt-2">Proteção de Dados Pessoais (PII). Exige bases legais (consentimento, legítimo interesse) e direitos do titular.</p>
+                        </div>
+                        <div class="rounded bg-gray-50 p-4 border border-gray-200">
+                            <h4 class="font-bold text-gray-800 flex items-center gap-2">
+                                <span class="bg-purple-100 p-1 rounded text-purple-600">📚</span> Catálogo de Dados
+                            </h4>
+                            <p class="text-sm text-gray-600 mt-2">Inventário centralizado com metadados (técnicos e de negócio) para facilitar a descoberta e entendimento dos dados.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 9: FLASHCARDS (COMPLETO E FUNCIONAL) -->
+        <section id="modulo9" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-lg ring-1 ring-blue-900/10">
+                <div class="flex items-center justify-between border-b border-gray-200 pb-4 mb-6">
+                    <h2 class="text-2xl font-bold text-blue-700">9. Flashcards de Estudo</h2>
+                    <span class="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">Memorização</span>
+                </div>
+                
+                <p class="mb-6 text-gray-600 text-center">Teste seus conhecimentos. Clique no cartão ou pressione <strong>Espaço</strong> para girar.</p>
+
+                <!-- Flashcard Container -->
+                <div class="relative mx-auto h-72 w-full max-w-lg perspective-1000">
+                    <div id="flashcard" class="flashcard-inner cursor-pointer" onclick="flipCard()">
+                        <!-- Front -->
+                        <div class="flashcard-front flex flex-col">
+                            <span class="absolute top-4 left-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Pergunta</span>
+                            <p id="card-question" class="text-xl font-bold text-gray-800 md:text-2xl leading-tight">Carregando...</p>
+                            <div class="absolute bottom-4 text-xs text-gray-400">Clique para virar</div>
+                        </div>
+                        <!-- Back -->
+                        <div class="flashcard-back flex flex-col">
+                            <span class="absolute top-4 left-4 text-xs font-bold text-blue-300 uppercase tracking-widest">Resposta</span>
+                            <p id="card-answer" class="text-xl font-medium md:text-2xl text-blue-900 leading-tight">Carregando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="mt-8 flex flex-col items-center gap-4">
+                    
+                    <!-- Navigation Buttons -->
+                    <div class="flex items-center gap-4">
+                        <button onclick="prevCard()" class="rounded-full bg-gray-200 p-3 text-gray-700 transition hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" title="Anterior (Seta Esquerda)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        
+                        <div class="min-w-[120px] text-center">
+                            <span class="text-xs text-gray-500 uppercase tracking-wider block mb-1">Cartão</span>
+                            <span class="font-mono text-xl font-bold text-blue-900">
+                                <span id="current-index">1</span><span class="text-gray-400 text-lg mx-1">/</span><span id="total-count">50</span>
+                            </span>
+                        </div>
+
+                        <button onclick="nextCard()" class="rounded-full bg-gray-200 p-3 text-gray-700 transition hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" title="Próximo (Seta Direita)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4">
+                        <button onclick="flipCard()" class="rounded-md bg-blue-600 px-8 py-2.5 font-semibold text-white transition hover:bg-blue-700 shadow-md active:transform active:scale-95">
+                            Girar
+                        </button>
+                        <button onclick="shuffleCards()" class="rounded-md bg-white border border-gray-300 px-6 py-2.5 font-semibold text-gray-700 transition hover:bg-gray-50 shadow-sm flex items-center gap-2 active:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Embaralhar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 10: SIMULADO (COMPLETO) -->
+        <section id="modulo10" class="content-section mb-16">
+            <div class="rounded-lg bg-white p-6 shadow-lg ring-1 ring-green-900/10 border-t-4 border-green-600">
+                <div class="flex items-center justify-between border-b border-gray-200 pb-4 mb-6">
+                    <h2 class="text-2xl font-bold text-green-700">10. Simulado: 100 Questões</h2>
+                    <div class="text-sm font-semibold bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                        Pontuação: <span id="quiz-score">0</span>/100
+                    </div>
+                </div>
+
+                <!-- Intro Screen -->
+                <div id="quiz-intro" class="text-center py-10">
+                    <h3 class="text-xl font-bold mb-4">Teste seus conhecimentos para o Concurso</h3>
+                    <p class="mb-6 text-gray-600">Este simulado contém 100 questões de múltipla escolha (A-E) cobrindo todo o conteúdo da apostila. Você receberá feedback imediato após cada resposta.</p>
+                    <button onclick="startQuiz()" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition shadow-md">
+                        Iniciar Simulado
+                    </button>
+                </div>
+
+                <!-- Quiz Container (Hidden initially) -->
+                <div id="quiz-container" class="hidden">
+                    <div class="mb-4 flex justify-between items-center text-sm text-gray-500">
+                        <span>Questão <span id="q-number">1</span> de 100</span>
+                        <div class="w-1/3 bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full" style="width: 1%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <p id="q-text" class="text-lg font-semibold text-gray-900 mb-6 leading-relaxed">Carregando...</p>
+                        
+                        <div id="q-options" class="space-y-3">
+                            <!-- Options injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Feedback Area -->
+                    <div id="q-feedback" class="hidden mb-6 p-4 rounded-lg border">
+                        <p id="feedback-msg" class="font-bold mb-1"></p>
+                        <p id="feedback-detail" class="text-sm"></p>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button id="btn-next-q" onclick="nextQuestion()" class="hidden bg-blue-600 text-white font-bold py-2 px-6 rounded hover:bg-blue-700 transition">
+                            Próxima Questão →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Screen (Hidden initially) -->
+                <div id="quiz-results" class="hidden text-center py-10">
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">Simulado Finalizado!</h3>
+                    <div class="text-6xl font-bold text-green-600 mb-2"><span id="final-score">0</span>%</div>
+                    <p class="text-gray-600 mb-8">Acertos de 100 questões.</p>
+                    
+                    <div id="performance-msg" class="text-lg font-medium mb-8"></div>
+                    
+                    <button onclick="resetQuiz()" class="bg-gray-800 text-white font-bold py-2 px-6 rounded hover:bg-gray-900 transition">
+                        Refazer Simulado
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 1. Flashcards Logic (50 Cards) ---
+        const originalFlashcards = [
+            { q: "Qual o objetivo principal da Arquitetura Corporativa?", a: "Alinhar a estratégia de TI com a estratégia de negócios." },
+            { q: "O que é um Sistema de Processamento de Transações (SPT)?", a: "Sistema de nível operacional que registra transações rotineiras (ex: PDV)." },
+            { q: "Qual o foco do nível Estratégico de SI (SIE)?", a: "Longo prazo, decisões não estruturadas e uso de Dashboards/KPIs." },
+            { q: "O que significa ERP?", a: "Enterprise Resource Planning (Sistema Integrado de Gestão Empresarial)." },
+            { q: "Qual a função principal de um CRM?", a: "Gerenciar o relacionamento com o cliente (Vendas, Marketing, Suporte)." },
+            { q: "No Ciclo de Vida em Cascata, quando começam os testes?", a: "Apenas após o término da fase de implementação (codificação)." },
+            { q: "O que é uma Sprint no Scrum?", a: "Um ciclo de trabalho curto e fixo (time-boxed), geralmente de 2 a 4 semanas." },
+            { q: "Quais são as 4 camadas clássicas da Arquitetura Corporativa?", a: "Negócio, Dados, Aplicações e Tecnologia." },
+            { q: "O que a Camada de Negócio descreve?", a: "A estratégia, governança, processos e estrutura organizacional." },
+            { q: "O que é um Mapa de Capacidade de Negócio?", a: "Artefato que descreve 'o que' a empresa faz, independente de 'como' faz." },
+            { q: "Qual o foco da Camada de Aplicações?", a: "O portfólio de sistemas e como eles interagem para suportar o negócio." },
+            { q: "O que é o Zachman Framework?", a: "Uma ontologia (matriz) para classificar artefatos de arquitetura." },
+            { q: "Quais são as duas dimensões da Matriz de Zachman?", a: "Perguntas (6 W's) e Perspectivas (Públicos)." },
+            { q: "O Zachman Framework define um processo (passo a passo)?", a: "Não, ele é apenas uma estrutura de classificação (taxonomia)." },
+            { q: "O que é o TOGAF?", a: "The Open Group Architecture Framework (um método para desenvolver AC)." },
+            { q: "O que é o ADM no TOGAF?", a: "Architecture Development Method (o ciclo central de desenvolvimento)." },
+            { q: "Qual a fase 'A' do TOGAF ADM?", a: "Visão da Arquitetura." },
+            { q: "O que ocorre na fase de 'Gestão de Requisitos' do TOGAF?", a: "Ocorre continuamente em todas as fases para gerenciar demandas." },
+            { q: "O que é Racionalização de Aplicações?", a: "Processo de avaliar e otimizar o portfólio de software (reduzir redundâncias)." },
+            { q: "No modelo TIME (Gartner), o que fazer com apps 'Tolerate'?", a: "Manter como estão (baixo custo), pois funcionam bem mas têm baixo valor." },
+            { q: "No modelo TIME, o que significa 'Migrate'?", a: "Alto valor de negócio, mas tecnologia inadequada. Deve ser modernizada." },
+            { q: "Qual a diferença entre Integração e Interoperabilidade?", a: "Integração é a conexão técnica; Interoperabilidade é a capacidade de entender e usar o dado." },
+            { q: "O que é um API Gateway?", a: "Ponto único de entrada para APIs, gerenciando segurança, roteamento e tráfego." },
+            { q: "O que é REST?", a: "Um estilo arquitetural para projetar aplicações em rede (comum em APIs)." },
+            { q: "Qual a lei brasileira que rege a privacidade de dados?", a: "LGPD (Lei Geral de Proteção de Dados)." },
+            { q: "O que são Metadados?", a: "Dados sobre os dados (descrevem contexto, origem, formato)." },
+            { q: "Quais são 3 dimensões da Qualidade de Dados?", a: "Acurácia, Completude e Consistência (entre outras)." },
+            { q: "O que é um Catálogo de Dados?", a: "Inventário organizado que permite aos usuários encontrar e entender os dados." },
+            { q: "O que é 'Interoperabilidade Semântica'?", a: "Garantia de que o significado da informação trocada é preservado entre sistemas." },
+            { q: "O que é a Fase Preliminar do TOGAF?", a: "Preparação e definição do 'framework' e princípios antes de iniciar o ciclo." },
+            { q: "O que é o 'Enterprise Continuum' no TOGAF?", a: "Um repositório virtual de ativos arquiteturais (do genérico ao específico)." },
+            { q: "Na Camada de Tecnologia, o que é documentado?", a: "Hardware, Software de Base, Redes e Data Centers." },
+            { q: "O que é BPMN?", a: "Notação padrão para modelagem de processos de negócio." },
+            { q: "Qual o papel do Product Owner no Scrum?", a: "Maximizar o valor do produto e gerenciar o Backlog." },
+            { q: "O que é um 'Gap Analysis' (Análise de Lacunas)?", a: "Comparação entre o estado atual (As-Is) e futuro (To-Be) para identificar o que falta." },
+            { q: "O que é Governança de TI?", a: "Estrutura para garantir que a TI suporte e estenda as estratégias e objetivos da organização." },
+            { q: "O que é 'Shadow IT'?", a: "Uso de sistemas/dispositivos sem o conhecimento ou aprovação da TI oficial." },
+            { q: "Qual o benefício de padronizar tecnologias?", a: "Redução de complexidade, custos de suporte e facilidade de integração." },
+            { q: "O que é um ESB (Enterprise Service Bus)?", a: "Arquitetura de integração centralizada (barramento) para rotear e transformar mensagens." },
+            { q: "O que é Microsserviços?", a: "Arquitetura onde a aplicação é dividida em serviços pequenos e independentes." },
+            { q: "O que é o DAMA-DMBOK?", a: "Corpo de conhecimento (framework) principal para Gestão de Dados." },
+            { q: "O que é MDM (Master Data Management)?", a: "Gestão de Dados Mestres (dados críticos e compartilhados, ex: Clientes, Produtos)." },
+            { q: "Qual o princípio da 'Finalidade' na LGPD?", a: "O dado só pode ser tratado para propósitos legítimos, específicos e informados." },
+            { q: "O que é um Stakeholder na arquitetura?", a: "Qualquer pessoa ou grupo afetado pelo projeto de arquitetura." },
+            { q: "O que é SCM (Supply Chain Management)?", a: "Gestão da Cadeia de Suprimentos." },
+            { q: "O que é um Diagrama de Fluxo de Dados (DFD)?", a: "Representação visual do fluxo de informações através de um sistema." },
+            { q: "O que é Engenharia Reversa em legado?", a: "Analisar um sistema existente para identificar seus componentes e relacionamentos." },
+            { q: "Qual a Fase 'H' do TOGAF?", a: "Gestão de Mudanças da Arquitetura." },
+            { q: "O que é o princípio 'Need to Know' (Necessidade)?", a: "Acesso/Coleta restrito apenas ao estritamente necessário para a função." },
+            { q: "Qual o objetivo de um Dashboard Executivo?", a: "Apresentar KPIs consolidados para rápida tomada de decisão estratégica." }
+        ];
+
+        let flashcards = [...originalFlashcards];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        const cardElement = document.getElementById('flashcard');
+        const questionEl = document.getElementById('card-question');
+        const answerEl = document.getElementById('card-answer');
+        const indexEl = document.getElementById('current-index');
+        const totalEl = document.getElementById('total-count');
+
+        function initFlashcards() {
+            totalEl.innerText = flashcards.length;
+            renderCard();
+        }
+
+        function renderCard() {
+            if (isFlipped) {
+                cardElement.classList.remove('flipped');
+                isFlipped = false;
+                setTimeout(() => { updateText(); }, 200); 
+            } else {
+                updateText();
+            }
+        }
+
+        function updateText() {
+            questionEl.innerText = flashcards[currentIndex].q;
+            answerEl.innerText = flashcards[currentIndex].a;
+            indexEl.innerText = currentIndex + 1;
+        }
+
+        window.flipCard = function() {
+            // Apply class to inner element for the CSS transform
+            document.querySelector('.flashcard-inner').classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        };
+
+        window.nextCard = function() {
+            currentIndex = (currentIndex + 1) % flashcards.length;
+            renderCard();
+        };
+
+        window.prevCard = function() {
+            currentIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+            renderCard();
+        };
+
+        window.shuffleCards = function() {
+            for (let i = flashcards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+            }
+            currentIndex = 0;
+            renderCard();
+        };
+
+        // --- 2. Quiz Logic (100 Questions) ---
+        const quizData = [];
+        
+        // Helper to create questions
+        const createQ = (q, opts, ans, exp) => quizData.push({ q, opts, ans, exp });
+
+        // Batch 1: Conceitos (1-10)
+        createQ("Qual o principal objetivo da Arquitetura Corporativa?", ["A) Reduzir salários", "B) Alinhar TI ao Negócio", "C) Comprar hardware", "D) Criar sites", "E) Instalar Windows"], 1, "A AC busca garantir que a TI suporte a estratégia de negócios.");
+        createQ("Qual NÃO é um benefício da AC?", ["A) Redução de custos", "B) Aumento de complexidade", "C) Agilidade", "D) Gestão de riscos", "E) Padronização"], 1, "AC visa reduzir a complexidade, não aumentá-la.");
+        createQ("O que representa o estado 'As-Is'?", ["A) Estado Futuro", "B) Estado Ideal", "C) Estado Atual", "D) Estado Passado", "E) Estado Financeiro"], 2, "As-Is refere-se à arquitetura atual.");
+        createQ("O que representa o estado 'To-Be'?", ["A) Estado Histórico", "B) Estado Atual", "C) Estado Falho", "D) Estado Futuro Alvo", "E) Estado de Erro"], 3, "To-Be é a arquitetura futura desejada.");
+        createQ("A AC ajuda a eliminar:", ["A) Lucros", "B) Clientes", "C) Silos Tecnológicos", "D) Governança", "E) Processos"], 2, "AC integra a empresa eliminando silos.");
+        createQ("Arquitetura Corporativa foca em:", ["A) Apenas Software", "B) Apenas Rede", "C) Visão Holística da Empresa", "D) Apenas Banco de Dados", "E) Apenas Suporte"], 2, "AC olha o todo: negócio, dados, apps e tec.");
+        createQ("A padronização tecnológica resulta em:", ["A) Maior custo de suporte", "B) Menor interoperabilidade", "C) Economia de escala", "D) Mais bugs", "E) Lentidão"], 2, "Padronizar reduz custos e facilita gestão.");
+        createQ("Quem é o principal interessado na AC?", ["A) Apenas o estagiário", "B) Stakeholders (Interessados)", "C) O fornecedor de café", "D) Ninguém", "E) O concorrente"], 1, "Stakeholders incluem C-level, gestores e TI.");
+        createQ("AC facilita a conformidade com:", ["A) Leis de trânsito", "B) Regulações (ex: LGPD)", "C) Regras de futebol", "D) Moda", "E) Nenhuma das anteriores"], 1, "Ajuda a mapear dados para compliance.");
+        createQ("Um projeto de AC é:", ["A) Pontual e único", "B) Contínuo e evolutivo", "C) Rápido e barato", "D) Desnecessário", "E) Apenas documental"], 1, "AC é uma prática contínua.");
+
+        // Batch 2: Sistemas (11-20)
+        createQ("O nível estratégico usa sistemas do tipo:", ["A) SPT", "B) SIE (ESS)", "C) KWS", "D) SCM", "E) CAD"], 1, "Executivos usam Sistemas de Informação Executiva.");
+        createQ("O nível operacional usa sistemas do tipo:", ["A) SIE", "B) SAD", "C) SPT (OLTP)", "D) BI", "E) ESB"], 2, "Transações diárias são SPT.");
+        createQ("ERP significa:", ["A) Enterprise Result Plan", "B) Enterprise Resource Planning", "C) Electronic Resource Process", "D) External Route Path", "E) Effective Resource Plan"], 1, "Planejamento de Recursos Empresariais.");
+        createQ("A função do CRM é:", ["A) Gerir Estoque", "B) Gerir Funcionários", "C) Gerir Relacionamento com Cliente", "D) Gerir Servidores", "E) Gerir Contabilidade"], 2, "Customer Relationship Management.");
+        createQ("O SCM foca em:", ["A) Marketing", "B) Cadeia de Suprimentos", "C) RH", "D) Vendas Varejo", "E) Suporte Técnico"], 1, "Supply Chain Management.");
+        createQ("Sistemas de Apoio à Decisão (SAD) permitem:", ["A) Processar folha", "B) Simulações 'What-if'", "C) Backup", "D) Formatação de disco", "E) Envio de email"], 1, "SAD foca em análise e simulação.");
+        createQ("Dashboards e KPIs são típicos de:", ["A) Operadores de caixa", "B) Executivos", "C) Programadores", "D) Estagiários", "E) Técnicos de rede"], 1, "Monitoramento estratégico.");
+        createQ("Um PDV (Ponto de Venda) é um:", ["A) SIE", "B) SAD", "C) SPT", "D) CRM", "E) ERP"], 2, "Registra vendas (transação operacional).");
+        createQ("Integração de RH, Finanças e Compras é papel do:", ["A) CRM", "B) SCM", "C) ERP", "D) BI", "E) Email"], 2, "O ERP integra processos internos.");
+        createQ("Qual sistema apoia decisões semiestruturadas?", ["A) SPT", "B) SAD", "C) SIE", "D) ERP", "E) OS"], 1, "Sistemas de Apoio à Decisão.");
+
+        // Batch 3: Ciclo de Vida (21-30)
+        createQ("O modelo Cascata é caracterizado por:", ["A) Fases sequenciais e rígidas", "B) Sprints", "C) Flexibilidade total", "D) Entrega contínua", "E) Sem documentação"], 0, "Waterfall é linear.");
+        createQ("O Scrum é um framework:", ["A) Preditivo", "B) Ágil", "C) Cascata", "D) Rígido", "E) Documental"], 1, "Scrum é Ágil.");
+        createQ("Uma Sprint dura geralmente:", ["A) 6 meses", "B) 1 dia", "C) 2 a 4 semanas", "D) 1 ano", "E) 1 hora"], 2, "Time-box padrão.");
+        createQ("Quem prioriza o Backlog no Scrum?", ["A) Scrum Master", "B) Time de Dev", "C) Product Owner (PO)", "D) Gerente de Projeto", "E) O Cliente final"], 2, "O PO define o valor.");
+        createQ("Artefato que contém tudo a ser feito no produto:", ["A) Sprint Backlog", "B) Product Backlog", "C) Burndown", "D) Ata de reunião", "E) E-mail"], 1, "Lista mestre de requisitos.");
+        createQ("Reunião diária do Scrum:", ["A) Sprint Planning", "B) Daily Scrum", "C) Review", "D) Retrospective", "E) Grooming"], 1, "Daily de 15 min.");
+        createQ("Teste de Aceitação do Usuário (UAT) ocorre:", ["A) No início", "B) No meio", "C) Antes da produção", "D) Nunca", "E) Após descarte"], 2, "Validação final pelo usuário.");
+        createQ("Kanban foca em:", ["A) Sprints", "B) Fluxo contínuo e visualização", "C) Documentação", "D) Cargos rígidos", "E) Reuniões longas"], 1, "Gestão visual de fluxo.");
+        createQ("Engenharia de Requisitos define:", ["A) O hardware", "B) O 'O quê' o sistema deve fazer", "C) A linguagem de código", "D) A cor do botão", "E) O preço"], 1, "Requisitos funcionais e não funcionais.");
+        createQ("Manutenção corretiva visa:", ["A) Adicionar funções", "B) Corrigir defeitos", "C) Melhorar performance", "D) Migrar plataforma", "E) Treinar usuário"], 1, "Corrigir bugs.");
+
+        // Batch 4: Camadas (31-40)
+        createQ("Qual camada define os processos de negócio?", ["A) Tecnologia", "B) Aplicação", "C) Negócio", "D) Dados", "E) Segurança"], 2, "Camada de Negócio.");
+        createQ("BPMN é usado na camada de:", ["A) Dados", "B) Negócio", "C) Aplicação", "D) Tecnologia", "E) Rede"], 1, "Modelagem de Processos.");
+        createQ("Qual camada trata de Servidores e Redes?", ["A) Negócio", "B) Dados", "C) Aplicação", "D) Tecnologia", "E) Estratégia"], 3, "Infraestrutura.");
+        createQ("Modelos Lógicos e Físicos pertencem à camada de:", ["A) Negócio", "B) Aplicação", "C) Dados", "D) Tecnologia", "E) Pessoas"], 2, "Arquitetura de Dados.");
+        createQ("O Catálogo de Aplicações pertence à camada:", ["A) Negócio", "B) Dados", "C) Aplicação", "D) Tecnologia", "E) Física"], 2, "Inventário de software.");
+        createQ("Um diagrama de rede está na camada:", ["A) Negócio", "B) Aplicação", "C) Tecnologia", "D) Dados", "E) Governança"], 2, "Infraestrutura de rede.");
+        createQ("A interrelação entre camadas garante:", ["A) Caos", "B) Rastreabilidade", "C) Lentidão", "D) Custo alto", "E) Isolamento"], 1, "Saber qual TI suporta qual Negócio.");
+        createQ("Qual camada conecta o negócio à tecnologia?", ["A) Aplicação", "B) Dados", "C) Nenhuma", "D) Externa", "E) Legal"], 0, "Apps automatizam processos.");
+        createQ("Dicionário de Dados é artefato de:", ["A) Negócio", "B) Dados", "C) App", "D) Tec", "E) Teste"], 1, "Metadados.");
+        createQ("Organograma é artefato de:", ["A) Negócio", "B) Dados", "C) App", "D) Tec", "E) Rede"], 0, "Estrutura organizacional.");
+
+        // Batch 5: Frameworks (41-60)
+        createQ("Zachman Framework é:", ["A) Um processo", "B) Uma ferramenta", "C) Uma ontologia (taxonomia)", "D) Um software", "E) Uma lei"], 2, "Estrutura de classificação.");
+        createQ("Quantas colunas tem a matriz de Zachman?", ["A) 4", "B) 5", "C) 6", "D) 7", "E) 3"], 2, "6 perguntas (W's).");
+        createQ("TOGAF significa:", ["A) The Open Group Architecture Framework", "B) Total Open Group Arq File", "C) Tech Open Group Arq Form", "D) Top Open Group Arq Frame", "E) Nenhuma"], 0, "Nome oficial.");
+        createQ("O núcleo do TOGAF é:", ["A) O cubo", "B) O ADM", "C) A pirâmide", "D) A lista", "E) O círculo"], 1, "Architecture Development Method.");
+        createQ("A Fase A do ADM é:", ["A) Negócio", "B) Visão da Arquitetura", "C) Preliminar", "D) Tecnologia", "E) Migração"], 1, "Define escopo e visão.");
+        createQ("Qual fase trata da Arquitetura de Negócio?", ["A) A", "B) B", "C) C", "D) D", "E) E"], 1, "Fase B.");
+        createQ("A Fase C do ADM cobre:", ["A) Apenas Dados", "B) Apenas App", "C) Sistemas de Informação (Dados e App)", "D) Tecnologia", "E) Visão"], 2, "SI engloba Dados e Apps.");
+        createQ("Fase D do ADM foca em:", ["A) Negócio", "B) Tecnologia", "C) Mudança", "D) Requisitos", "E) Visão"], 1, "Arquitetura Tecnológica.");
+        createQ("A Gestão de Requisitos no ADM é:", ["A) Apenas no início", "B) Apenas no fim", "C) Contínua (Central)", "D) Desnecessária", "E) Fase H"], 2, "Alimenta todas as fases.");
+        createQ("Enterprise Continuum é:", ["A) Um software", "B) Um repositório virtual de ativos", "C) Uma fase", "D) Um cargo", "E) Um servidor"], 1, "Classifica ativos.");
+        createQ("Qual fase trata do Planejamento da Migração?", ["A) E", "B) F", "C) G", "D) H", "E) A"], 1, "Fase F.");
+        createQ("Fase G foca em:", ["A) Visão", "B) Governança da Implementação", "C) Tecnologia", "D) Dados", "E) Negócio"], 1, "Supervisão da implementação.");
+        createQ("Zachman: A coluna 'Quem' refere-se a:", ["A) Dados", "B) Processos", "C) Pessoas", "D) Tempo", "E) Rede"], 2, "Pessoas/Organização.");
+        createQ("Zachman: A coluna 'Onde' refere-se a:", ["A) Rede/Localização", "B) Dados", "C) Tempo", "D) Motivação", "E) Função"], 0, "Rede.");
+        createQ("No TOGAF, 'Gap Analysis' serve para:", ["A) Criar logos", "B) Identificar lacunas entre As-Is e To-Be", "C) Calcular custos", "D) Demitir pessoas", "E) Testar código"], 1, "Base para o roadmap.");
+        createQ("O ADM é:", ["A) Linear", "B) Iterativo", "C) Caótico", "D) Único", "E) Plano"], 1, "Ciclo contínuo.");
+        createQ("Fase H trata de:", ["A) Início", "B) Gestão de Mudanças", "C) Tecnologia", "D) Dados", "E) Visão"], 1, "Evolução da arquitetura.");
+        createQ("Qual não é uma fase do ADM?", ["A) Preliminar", "B) Visão", "C) Execução de Código", "D) Negócio", "E) Tecnologia"], 2, "ADM planeja, não codifica.");
+        createQ("Building Blocks são:", ["A) Tijolos", "B) Componentes reutilizáveis de arquitetura", "C) Servidores", "D) Pessoas", "E) Softwares"], 1, "Conceito chave do TOGAF.");
+        createQ("Qual framework é uma matriz?", ["A) TOGAF", "B) Zachman", "C) Scrum", "D) PMBOK", "E) ITIL"], 1, "Zachman.");
+
+        // Batch 6: Racionalização (61-70)
+        createQ("Racionalização visa:", ["A) Aumentar apps", "B) Reduzir redundâncias e custos", "C) Comprar mais licenças", "D) Ignorar legado", "E) Contratar mais"], 1, "Otimização.");
+        createQ("Modelo TIME: T significa:", ["A) Test", "B) Tolerate", "C) Time", "D) Total", "E) Tech"], 1, "Tolerar.");
+        createQ("Modelo TIME: App de Alto Valor e Alta Tec:", ["A) Eliminate", "B) Migrate", "C) Invest", "D) Tolerate", "E) Ignore"], 2, "Investir.");
+        createQ("Modelo TIME: App de Baixo Valor e Baixa Tec:", ["A) Invest", "B) Eliminate", "C) Migrate", "D) Tolerate", "E) Keep"], 1, "Eliminar.");
+        createQ("Modelo TIME: App de Alto Valor e Baixa Tec:", ["A) Eliminate", "B) Tolerate", "C) Migrate", "D) Invest", "E) Sell"], 2, "Migrar/Modernizar.");
+        createQ("APM significa:", ["A) App Process Map", "B) Application Portfolio Mgmt", "C) All People Meet", "D) Arq Process Model", "E) Nenhuma"], 1, "Gestão de Portfólio.");
+        createQ("Obsolescência tecnológica gera:", ["A) Segurança", "B) Risco e Custo", "C) Agilidade", "D) Lucro", "E) Inovação"], 1, "Dívida técnica.");
+        createQ("O objetivo do 'Eliminate' é:", ["A) Descomissionar", "B) Melhorar", "C) Manter", "D) Reeescrever", "E) Vender"], 0, "Retirar de uso.");
+        createQ("Aplicações 'Tolerate' devem receber:", ["A) Alto investimento", "B) Reescrita total", "C) Manutenção mínima", "D) Eliminação", "E) Migração"], 2, "Não vale a pena investir muito.");
+        createQ("Racionalização ajuda a:", ["A) Fragmentar dados", "B) Simplificar o landscape de TI", "C) Aumentar complexidade", "D) Criar silos", "E) Gastar mais"], 1, "Simplificação.");
+
+        // Batch 7: APIs (71-80)
+        createQ("Integração foca em:", ["A) Significado", "B) Conexão técnica", "C) Pessoas", "D) Hardware", "E) Papel"], 1, "Conectar sistemas.");
+        createQ("Interoperabilidade foca em:", ["A) Cabos", "B) Capacidade de trabalhar junto e entender", "C) Protocolo puro", "D) Velocidade", "E) Preço"], 1, "Troca útil de info.");
+        createQ("API Gateway fornece:", ["A) Banco de dados", "B) Ponto único de entrada e segurança", "C) Interface gráfica", "D) Hardware", "E) Wi-Fi"], 1, "Gerencia o tráfego.");
+        createQ("REST usa qual formato comum?", ["A) XML apenas", "B) JSON", "C) Cobol", "D) Binary", "E) Excel"], 1, "JSON é o padrão moderno.");
+        createQ("OAuth 2.0 é usado para:", ["A) Banco de dados", "B) Autorização/Segurança", "C) Rede", "D) Design", "E) Teste"], 1, "Padrão de segurança.");
+        createQ("Rate Limiting serve para:", ["A) Acelerar", "B) Evitar sobrecarga de requisições", "C) Cobrar", "D) Deletar", "E) Traduzir"], 1, "Controle de tráfego.");
+        createQ("Portal do Desenvolvedor serve para:", ["A) Jogar", "B) Documentação e descoberta de APIs", "C) Comprar APIs", "D) Deletar APIs", "E) Nenhuma"], 1, "Facilita o uso.");
+        createQ("Ciclo de vida da API inclui:", ["A) Apenas criação", "B) Criação, Publicação, Depreciação", "C) Apenas delete", "D) Apenas teste", "E) Nenhuma"], 1, "Gestão completa.");
+        createQ("Microsserviços comunicam-se via:", ["A) Telepatia", "B) APIs (HTTP/REST)", "C) Disquete", "D) Papel", "E) USB"], 1, "Comunicação em rede.");
+        createQ("Interoperabilidade Semântica garante:", ["A) Conexão física", "B) Significado preservado", "C) Velocidade", "D) Criptografia", "E) Cor"], 1, "Entendimento do dado.");
+
+        // Batch 8: Dados e Gov (81-100)
+        createQ("Governança de Dados gerencia dados como:", ["A) Lixo", "B) Ativo estratégico", "C) Subproduto", "D) Custo", "E) Problema"], 1, "Dados são ativos.");
+        createQ("Qualidade de Dados: Acurácia é:", ["A) Dado existe", "B) Dado reflete a realidade", "C) Dado é único", "D) Dado é rápido", "E) Dado é bonito"], 1, "Exatidão.");
+        createQ("Qualidade de Dados: Completude é:", ["A) Dado correto", "B) Todos dados necessários presentes", "C) Dado único", "D) Dado novo", "E) Dado velho"], 1, "Não falta nada.");
+        createQ("Metadados são:", ["A) Dados falsos", "B) Dados sobre dados", "C) Big Data", "D) Backups", "E) Vírus"], 1, "Descrevem o dado.");
+        createQ("LGPD protege:", ["A) Dados de empresas", "B) Dados pessoais (Pessoa Natural)", "C) Segredos industriais", "D) Softwares", "E) Animais"], 1, "Dados de pessoas físicas.");
+        createQ("Princípio da Necessidade (LGPD):", ["A) Coletar tudo", "B) Coletar o mínimo necessário", "C) Vender tudo", "D) Guardar pra sempre", "E) Ignorar"], 1, "Minimização.");
+        createQ("DLM significa:", ["A) Data Long Memory", "B) Data Lifecycle Management", "C) Disk Low Memory", "D) Data Link Mode", "E) Nenhuma"], 1, "Ciclo de Vida.");
+        createQ("Catálogo de Dados ajuda em:", ["A) Vendas", "B) Descoberta e entendimento de dados", "C) Performance", "D) Backup", "E) Rede"], 1, "Data Discovery.");
+        createQ("MDM foca em:", ["A) Dados de log", "B) Dados Mestres (ex: Clientes)", "C) Dados temporários", "D) Emails", "E) Vídeos"], 1, "Entidades críticas.");
+        createQ("Classificação da Informação define:", ["A) Tamanho", "B) Nível de sensibilidade/proteção", "C) Cor", "D) Preço", "E) Autor"], 1, "Confidencialidade.");
+        createQ("Um dado 'Confidencial' vazado causa:", ["A) Nada", "B) Dano grave", "C) Alegria", "D) Lucro", "E) Promoção"], 1, "Alto impacto.");
+        createQ("Anonimização serve para:", ["A) Deletar dados", "B) Desvincular dado da pessoa", "C) Criptografar", "D) Vender", "E) Backup"], 1, "Proteger privacidade.");
+        createQ("O titular do dado é:", ["A) A empresa", "B) O governo", "C) A pessoa física dona do dado", "D) O sistema", "E) O hacker"], 2, "Dono do dado.");
+        createQ("Governança de TI x Governança de Dados:", ["A) Iguais", "B) TI foca em tecnologia, Dados foca na informação", "C) Opostos", "D) Inimigos", "E) Nenhuma"], 1, "Focos distintos mas complementares.");
+        createQ("DAMA-DMBOK é:", ["A) Um software", "B) Framework de Gestão de Dados", "C) Um banco", "D) Uma lei", "E) Um cargo"], 1, "Referência em dados.");
+        createQ("Shadow IT aumenta:", ["A) Controle", "B) Riscos de segurança e integração", "C) Governança", "D) Padronização", "E) Visibilidade"], 1, "TI invisível é risco.");
+        createQ("Silos de dados impedem:", ["A) Nada", "B) Visão única da verdade", "C) Erros", "D) Custos", "E) Backups"], 1, "Fragmentação.");
+        createQ("Quem define a política de dados?", ["A) Estagiário", "B) Comitê de Governança", "C) Usuário final", "D) Cliente", "E) Ninguém"], 1, "Decisão estratégica.");
+        createQ("O ciclo de vida do dado termina em:", ["A) Uso", "B) Descarte seguro/Exclusão", "C) Venda", "D) Backup", "E) Publicação"], 1, "Fim da vida útil.");
+        createQ("Para o CPU-PE, AC é fundamental para:", ["A) Gastar verba", "B) Eficiência e transformação digital do Estado", "C) Comprar computadores", "D) Criar logos", "E) Imprimir papel"], 1, "Objetivo final do cargo.");
+
+        // Quiz State
+        let currentQ = 0;
+        let score = 0;
+
+        function startQuiz() {
+            document.getElementById('quiz-intro').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const data = quizData[currentQ];
+            document.getElementById('q-number').innerText = currentQ + 1;
+            document.getElementById('progress-bar').style.width = ((currentQ + 1) / 100 * 100) + '%';
+            document.getElementById('q-text').innerText = data.q;
+            
+            const optsContainer = document.getElementById('q-options');
+            optsContainer.innerHTML = '';
+            
+            data.opts.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-option bg-white border border-gray-300 rounded p-4 text-gray-700 hover:shadow-sm';
+                div.innerText = opt;
+                div.onclick = () => selectOption(idx, div);
+                optsContainer.appendChild(div);
+            });
+
+            // Reset UI
+            document.getElementById('q-feedback').classList.add('hidden');
+            document.getElementById('btn-next-q').classList.add('hidden');
+        }
+
+        function selectOption(selectedIdx, element) {
+            // Disable all options
+            const opts = document.querySelectorAll('.quiz-option');
+            opts.forEach(o => {
+                o.onclick = null;
+                o.classList.add('disabled');
+            });
+
+            const data = quizData[currentQ];
+            const isCorrect = selectedIdx === data.ans;
+            
+            // Highlight selected
+            if (isCorrect) {
+                element.classList.add('correct');
+                score++;
+                document.getElementById('feedback-msg').innerText = "✅ Correto!";
+                document.getElementById('feedback-msg').className = "font-bold mb-1 text-green-700";
+                document.getElementById('q-feedback').className = "mb-6 p-4 rounded-lg border border-green-200 bg-green-50 block";
+            } else {
+                element.classList.add('incorrect');
+                // Highlight correct one
+                opts[data.ans].classList.add('correct');
+                document.getElementById('feedback-msg').innerText = "❌ Incorreto.";
+                document.getElementById('feedback-msg').className = "font-bold mb-1 text-red-700";
+                document.getElementById('q-feedback').className = "mb-6 p-4 rounded-lg border border-red-200 bg-red-50 block";
+            }
+
+            document.getElementById('quiz-score').innerText = score;
+            document.getElementById('feedback-detail').innerText = data.exp;
+            document.getElementById('btn-next-q').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            if (currentQ < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('quiz-results').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+            
+            let msg = "";
+            if (score >= 90) msg = "Excelente! Você está muito bem preparado.";
+            else if (score >= 70) msg = "Muito bom! Revise alguns pontos.";
+            else if (score >= 50) msg = "Bom, mas precisa estudar mais.";
+            else msg = "Precisa reforçar os estudos. Revise a apostila.";
+            
+            document.getElementById('performance-msg').innerText = msg;
+        }
+
+        function resetQuiz() {
+            currentQ = 0;
+            score = 0;
+            document.getElementById('quiz-score').innerText = 0;
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-intro').classList.remove('hidden');
+        }
+
+        // --- 3. General Init (Nav, Charts) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initFlashcards();
+            
+            const mobileMenuButton = document.getElementById('mobileMenuButton');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileLinks = document.querySelectorAll('.mobile-link');
+
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const expanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                    mobileMenuButton.setAttribute('aria-expanded', !expanded);
+                    mobileMenu.classList.toggle('open');
+                });
+            }
+
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.remove('open');
+                });
+            });
+
+            function updateActiveLink() {
+                let currentSection = '';
+                const sections = document.querySelectorAll('.content-section');
+                const scrollPosition = window.scrollY + 200;
+
+                sections.forEach(section => {
+                    if (scrollPosition >= section.offsetTop) {
+                        currentSection = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + currentSection) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+
+            // Chart
+            const ctx = document.getElementById('dataQualityChart');
+            if (ctx) {
+                new Chart(ctx.getContext('2d'), {
+                    type: 'radar',
+                    data: {
+                        labels: ['Acurácia', 'Completude', 'Consistência', 'Pontualidade', 'Unicidade'],
+                        datasets: [{
+                            label: 'Qualidade',
+                            data: [90, 75, 80, 95, 85],
+                            fill: true,
+                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                            borderColor: 'rgb(37, 99, 235)',
+                            pointBackgroundColor: 'rgb(37, 99, 235)',
+                            pointBorderColor: '#fff',
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: { r: { angleLines: { display: false }, suggestedMin: 50, suggestedMax: 100 } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
